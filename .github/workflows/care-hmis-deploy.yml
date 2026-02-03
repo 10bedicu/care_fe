@@ -27,7 +27,7 @@ jobs:
 
       - name: Update .env file
         run: |
-          echo "${{ vars.DEPLOYMENT_ENV_FILE }}" | base64 --decode > .env.production
+          echo ${{ secrets.DEPLOYMENT_ENV_FILE }} | tee .env.production
 
       - name: Install dependencies
         run: npm install
