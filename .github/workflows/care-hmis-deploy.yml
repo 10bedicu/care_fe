@@ -27,7 +27,7 @@ jobs:
 
       - name: Update .env file
         run: |
-          echo ${{ secrets.DEPLOYMENT_ENV_FILE }} | tee .env.production
+          printf '%s' '${{ secrets.DEPLOYMENT_ENV_FILE }}' > .env.production
 
       - name: Install dependencies
         run: npm install
