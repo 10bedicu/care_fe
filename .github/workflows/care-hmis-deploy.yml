@@ -25,10 +25,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Update .env file
-        run: |
-          printf '%s' '${{ secrets.DEPLOYMENT_ENV_FILE }}' > .env.production
-
       - name: Install dependencies
         run: npm install
 
