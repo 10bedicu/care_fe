@@ -358,6 +358,7 @@ export default function CreateEncounterForm({
                           form.setValue("organizations", value);
                         }
                       }}
+                      favoriteList="encounter_departments"
                     />
                     <FormMessage />
                   </FormItem>
