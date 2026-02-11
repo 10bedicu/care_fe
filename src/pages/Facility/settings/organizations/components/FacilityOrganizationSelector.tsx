@@ -87,16 +87,17 @@ export default function FacilityOrganizationSelector(
   const isMobile = useBreakpoints({ default: true, sm: false });
 
   // Fetch preferred organizations
-  const { data: preferredOrganizations } = useQuery({
-    queryKey: ["facilityOrganization-favorites", facilityId, favoriteList],
-    queryFn: query(facilityOrganizationApi.list, {
-      pathParams: { facilityId },
-      queryParams: {
-        favorite_list: favoriteList,
-      },
-    }),
-    enabled: !!favoriteList,
-  });
+  const { data: preferredOrganizations, isLoading: isLoadingPreferred } =
+    useQuery({
+      queryKey: ["facilityOrganization-favorites", facilityId, favoriteList],
+      queryFn: query(facilityOrganizationApi.list, {
+        pathParams: { facilityId },
+        queryParams: {
+          favorite_list: favoriteList,
+        },
+      }),
+      enabled: !!favoriteList,
+    });
 
   const preferredOrgIds = useMemo(() => {
     return preferredOrganizations?.results?.map((org) => org.id) || [];
@@ -132,28 +133,86 @@ export default function FacilityOrganizationSelector(
     })),
   });
 
+  const handleConfirmSelection = useCallback(
+    (org: FacilityOrganizationRead) => {
+      if (!selectedOrganizations.includes(org)) {
+        const newSelection = singleSelection
+          ? [org]
+          : [...selectedOrganizations, org];
+        setSelectedOrganizations(newSelection);
+        onChange(newSelection.map((org) => org.id));
+        setAlreadySelected(true);
+      }
+      setCurrentSelection(null);
+      setNavigationLevels([]);
+      setOpen(false);
+    },
+    [selectedOrganizations, onChange],
+  );
+
+  const getCurrentLevelOrganizations = useCallback(() => {
+    if (navigationLevels.length === 0) {
+      return rootOrganizations?.results || [];
+    }
+    const lastQuery = organizationQueries[navigationLevels.length - 1];
+    return lastQuery?.data?.results || [];
+  }, [navigationLevels, rootOrganizations, organizationQueries]);
+
+  // Auto-select when there's only one organization available
+  useEffect(() => {
+    const availableOrganizations = getCurrentLevelOrganizations();
+
+    // Only auto-select if:
+    // 1. We're at the root level (no navigation levels)
+    // 2. There's exactly one organization
+    // 3. No search is active
+    // 4. No organizations are currently selected
+    // 5. Not loading
+    if (
+      navigationLevels.length === 0 &&
+      availableOrganizations.length === 1 &&
+      !facilityOrgSearch &&
+      selectedOrganizations.length === 0 &&
+      !isLoadingRoot &&
+      !isLoadingPreferred &&
+      preferredOrgIds.length === 0
+    ) {
+      const singleOrg = availableOrganizations[0];
+
+      // Check if this organization is already selected in currentOrganizations prop
+      const isAlreadyInCurrent = currentOrganizations?.find(
+        (org) => org.id === singleOrg.id,
+      );
+
+      if (!isAlreadyInCurrent && !props.optional) {
+        handleConfirmSelection(singleOrg);
+      }
+    }
+  }, [
+    getCurrentLevelOrganizations,
+    handleConfirmSelection,
+    navigationLevels,
+    facilityOrgSearch,
+    selectedOrganizations,
+    isLoadingRoot,
+    currentOrganizations,
+    props.optional,
+  ]);
+
   useEffect(() => {
     if (value && value.length > 0) {
       const resolvedOrganizations = value
-        .map(
-          (id) =>
-            currentOrganizations?.find((org) => org.id === id) ||
-            preferredOrganizations?.results?.find((org) => org.id === id),
-        )
+        .map((id) => currentOrganizations?.find((org) => org.id === id))
         .filter((org) => org !== undefined);
       if (resolvedOrganizations.length > 0) {
         setSelectedOrganizations(resolvedOrganizations);
-      } else {
-        // Value has IDs but we can't resolve them - reset to allow auto-select
-        setSelectedOrganizations([]);
-        setHasAutoSelectedPreferred(false);
       }
     } else {
       setSelectedOrganizations([]);
       // Reset the auto-select flag when value is cleared (e.g., form reset)
-      setHasAutoSelectedPreferred(false);
+      // setHasAutoSelectedPreferred(false);
     }
-  }, [value, currentOrganizations, preferredOrganizations, showAllOrgs]);
+  }, [value, currentOrganizations, showAllOrgs]);
 
   // Auto-select preferred departments
   useEffect(() => {
@@ -237,23 +296,6 @@ export default function FacilityOrganizationSelector(
     setFacilityOrgSearch("");
   };
 
-  const handleConfirmSelection = useCallback(
-    (org: FacilityOrganizationRead) => {
-      if (!selectedOrganizations.includes(org)) {
-        const newSelection = singleSelection
-          ? [org]
-          : [...selectedOrganizations, org];
-        setSelectedOrganizations(newSelection);
-        onChange(newSelection.map((org) => org.id));
-        setAlreadySelected(true);
-      }
-      setCurrentSelection(null);
-      setNavigationLevels([]);
-      setOpen(false);
-    },
-    [selectedOrganizations, onChange],
-  );
-
   const handleRemoveOrganization = (index: number) => {
     const newSelection = selectedOrganizations.filter((_, i) => i !== index);
     setSelectedOrganizations(newSelection);
@@ -264,8 +306,6 @@ export default function FacilityOrganizationSelector(
 
   const handleOrganizationViewChange = (value: string) => {
     setShowAllOrgs(value === "all");
-    setSelectedOrganizations([]);
-    setCurrentSelection(null);
     setNavigationLevels([]);
   };
 
@@ -276,53 +316,6 @@ export default function FacilityOrganizationSelector(
       setFacilityOrgSearch("");
     }
   };
-
-  const getCurrentLevelOrganizations = useCallback(() => {
-    if (navigationLevels.length === 0) {
-      return rootOrganizations?.results || [];
-    }
-    const lastQuery = organizationQueries[navigationLevels.length - 1];
-    return lastQuery?.data?.results || [];
-  }, [navigationLevels, rootOrganizations, organizationQueries]);
-
-  // Auto-select when there's only one organization available
-  useEffect(() => {
-    const availableOrganizations = getCurrentLevelOrganizations();
-
-    // Only auto-select if:
-    // 1. We're at the root level (no navigation levels)
-    // 2. There's exactly one organization
-    // 3. No search is active
-    // 4. No organizations are currently selected
-    // 5. Not loading
-    if (
-      navigationLevels.length === 0 &&
-      availableOrganizations.length === 1 &&
-      !facilityOrgSearch &&
-      selectedOrganizations.length === 0 &&
-      !isLoadingRoot
-    ) {
-      const singleOrg = availableOrganizations[0];
-
-      // Check if this organization is already selected in currentOrganizations prop
-      const isAlreadyInCurrent = currentOrganizations?.find(
-        (org) => org.id === singleOrg.id,
-      );
-
-      if (!isAlreadyInCurrent && !props.optional) {
-        handleConfirmSelection(singleOrg);
-      }
-    }
-  }, [
-    getCurrentLevelOrganizations,
-    handleConfirmSelection,
-    navigationLevels,
-    facilityOrgSearch,
-    selectedOrganizations,
-    isLoadingRoot,
-    currentOrganizations,
-    props.optional,
-  ]);
 
   const renderNavigationPath = () => {
     return (
