@@ -25,6 +25,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22
+      - name: Update .env file
+        run: |
+          echo "${{ vars.DEPLOYMENT_ENV_FILE }}" | base64 --decode > .env
 
       - name: Install dependencies
         run: npm install --force
