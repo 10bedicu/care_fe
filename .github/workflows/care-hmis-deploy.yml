@@ -25,6 +25,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22
+          
       - name: Update .env file
         run: |
           echo "${{ vars.DEPLOYMENT_ENV_FILE }}" | base64 --decode > .env
@@ -33,7 +34,7 @@ jobs:
         run: npm install --force
 
       - name: Build the React app
-        run: NODE_ENV=development npm run build
+        run: npm run build
 
       - name: Upload build artifact
         id: upload-artifact
