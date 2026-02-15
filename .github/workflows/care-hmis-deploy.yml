@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - develop
+      - nurse-assistant
   workflow_dispatch:
 
 permissions:
