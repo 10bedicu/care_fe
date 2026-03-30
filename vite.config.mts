@@ -106,7 +106,7 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
           type: "module",
         },
         injectManifest: {
-          maximumFileSizeToCacheInBytes: 8000000,
+          maximumFileSizeToCacheInBytes: 20 * 1024 ** 2,
         },
         manifest: {
           name: "Care",
@@ -146,6 +146,8 @@ export default defineConfig(async ({ mode }): Promise<UserConfig> => {
         "@": path.resolve(__dirname, "./src"),
         "@careConfig": path.resolve(__dirname, "./care.config.ts"),
         "@core": path.resolve(__dirname, "src/"),
+        "zod/v3": path.resolve(__dirname, "node_modules/zod"),
+        "zod/v4": path.resolve(__dirname, "node_modules/zod"),
       },
     },
     // optimizeDeps: {

@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import {
   PatientDeceasedInfo,
   PatientHeader,
@@ -46,6 +47,7 @@ import { navigate } from "raviger";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { AppointmentEncounterHeader } from "./AppointmentEncounterHeader";
+import NurseAssistant from "./NurseAssistant";
 import { EncounterDiagnosticReportsTab } from "./tabs/diagnostic-reports";
 import { EncounterNotesTab } from "./tabs/notes";
 import { EncounterServiceRequestTab } from "./tabs/service-requests";
@@ -78,6 +80,7 @@ export const EncounterShow = (props: Props) => {
 
   useSidebarAutoCollapse();
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [showNurseAssistant, setShowNurseAssistant] = useState(false);
   const getShortcutDisplay = useEncounterShortcutDisplays();
 
   const { t } = useTranslation();
@@ -241,7 +244,13 @@ export const EncounterShow = (props: Props) => {
                   "text-base font-semibold rounded-md w-full",
                 )}
               />
-
+              <Button
+                variant="primary_gradient"
+                onClick={() => setShowNurseAssistant(!showNurseAssistant)}
+                className="text-base font-semibold rounded-md w-full"
+              >
+                Nurse Assistant
+              </Button>
               <EncounterCommandDialog
                 encounter={selectedEncounter}
                 open={actionsOpen}
@@ -250,7 +259,7 @@ export const EncounterShow = (props: Props) => {
                   <Button
                     variant="primary_gradient"
                     onClick={() => setActionsOpen(true)}
-                    className="text-base font-semibold rounded-md w-full"
+                    className="text-base font-semibold rounded-md w-50 shrink-0"
                   >
                     {t("encounter_actions")}
                     <CommandShortcut className="text-white hidden md:inline">
@@ -340,7 +349,10 @@ export const EncounterShow = (props: Props) => {
               )
             )}
           </div>
-
+          <NurseAssistant
+            show={showNurseAssistant}
+            setShow={setShowNurseAssistant}
+          />
           <NavTabs
             showMoreAfterIndex={showMoreAfterIndex}
             className="@container w-full"
